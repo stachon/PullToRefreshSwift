@@ -17,9 +17,9 @@ open class PullToRefreshView: UIView {
     }
     
     // MARK: Variables
-    let contentOffsetKeyPath = "contentOffset"
-    let contentSizeKeyPath = "contentSize"
-    var kvoContext = "PullToRefreshKVOContext"
+
+    private var contentOffestObservation: NSKeyValueObservation?
+    private var contentSizeObservation: NSKeyValueObservation?
     
     fileprivate var options: PullToRefreshOption
     fileprivate var backgroundView: UIView
@@ -114,95 +114,64 @@ open class PullToRefreshView: UIView {
     }
     
     open override func willMove(toSuperview superView: UIView!) {
-        //superview NOT superView, DO NEED to call the following method
-        //superview dealloc will call into this when my own dealloc run later!!
-        self.removeRegister()
         guard let scrollView = superView as? UIScrollView else {
             return
         }
-        scrollView.addObserver(self, forKeyPath: contentOffsetKeyPath, options: .initial, context: &kvoContext)
-        if !pull {
-            scrollView.addObserver(self, forKeyPath: contentSizeKeyPath, options: .initial, context: &kvoContext)
-        }
-    }
-    
-    fileprivate func removeRegister() {
-        if let scrollView = superview as? UIScrollView {
-            scrollView.removeObserver(self, forKeyPath: contentOffsetKeyPath, context: &kvoContext)
-            if !pull {
-                scrollView.removeObserver(self, forKeyPath: contentSizeKeyPath, context: &kvoContext)
-            }
-        }
-    }
-    
-    deinit {
-        self.removeRegister()
-    }
-    
-    // MARK: KVO
-    
-    open override func observeValue(forKeyPath keyPath: String?, of object: Any?, change: [NSKeyValueChangeKey : Any]?, context: UnsafeMutableRawPointer?) {
-        guard let scrollView = object as? UIScrollView else {
-            return
-        }
-        if keyPath == contentSizeKeyPath {
-            self.positionY = scrollView.contentSize.height
-            return
-        }
-        
-        if !(context == &kvoContext && keyPath == contentOffsetKeyPath) {
-            super.observeValue(forKeyPath: keyPath, of: object, change: change, context: context)
-            return
-        }
-        
-        // Pulling State Check
-        let offsetY = scrollView.contentOffset.y
-        
-        // Alpha set
-        if PullToRefreshConst.alpha {
-            var alpha = abs(offsetY) / (self.frame.size.height + 40)
-            if alpha > 0.8 {
-                alpha = 0.8
-            }
-            self.arrow.alpha = alpha
-        }
-        
-        if offsetY <= 0 {
-            if !self.pull {
-                return
+        contentOffestObservation = scrollView.observe(\.contentOffset, options: [.initial]) { scrollView, change in
+            // Pulling State Check
+            let offsetY = scrollView.contentOffset.y
+
+            // Alpha set
+            if PullToRefreshConst.alpha {
+                var alpha = abs(offsetY) / (self.frame.size.height + 40)
+                if alpha > 0.8 {
+                    alpha = 0.8
+                }
+                self.arrow.alpha = alpha
             }
 
-            if offsetY < -self.frame.size.height {
-                // pulling or refreshing
-                if scrollView.isDragging == false && self.state != .refreshing { //release the finger
-                    self.state = .refreshing //startAnimating
-                } else if self.state != .refreshing { //reach the threshold
-                    self.state = .triggered
+            if offsetY <= 0 {
+                if !self.pull {
+                    return
                 }
-            } else if self.state == .triggered {
-                //starting point, start from pulling
-                self.state = .pulling
+
+                if offsetY < -self.frame.size.height {
+                    // pulling or refreshing
+                    if scrollView.isDragging == false && self.state != .refreshing { //release the finger
+                        self.state = .refreshing //startAnimating
+                    } else if self.state != .refreshing { //reach the threshold
+                        self.state = .triggered
+                    }
+                } else if self.state == .triggered {
+                    //starting point, start from pulling
+                    self.state = .pulling
+                }
+                return //return for pull down
             }
-            return //return for pull down
+
+            //push up
+            let upHeight = offsetY + scrollView.frame.size.height - scrollView.contentSize.height
+            if upHeight > 0 {
+                // pulling or refreshing
+                if self.pull {
+                    return
+                }
+                if upHeight > self.frame.size.height {
+                    // pulling or refreshing
+                    if scrollView.isDragging == false && self.state != .refreshing { //release the finger
+                        self.state = .refreshing //startAnimating
+                    } else if self.state != .refreshing { //reach the threshold
+                        self.state = .triggered
+                    }
+                } else if self.state == .triggered  {
+                    //starting point, start from pulling
+                    self.state = .pulling
+                }
+            }
         }
-        
-        //push up
-        let upHeight = offsetY + scrollView.frame.size.height - scrollView.contentSize.height
-        if upHeight > 0 {
-            // pulling or refreshing
-            if self.pull {
-                return
-            }
-            if upHeight > self.frame.size.height {
-                // pulling or refreshing
-                if scrollView.isDragging == false && self.state != .refreshing { //release the finger
-                    self.state = .refreshing //startAnimating
-                } else if self.state != .refreshing { //reach the threshold
-                    self.state = .triggered
-                }
-            } else if self.state == .triggered  {
-                //starting point, start from pulling
-                self.state = .pulling
+        if !pull {
+            contentSizeObservation = scrollView.observe(\.contentSize, options: [.initial]) { scrollView, change in
+                self.positionY = scrollView.contentSize.height
             }
         }
     }

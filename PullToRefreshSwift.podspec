@@ -12,5 +12,6 @@ Pod::Spec.new do |s|
   s.source_files = "Source/**/*.{h,m,swift}"
   s.resources    = 'Source/**/*.{svg,png,xib}'
   s.requires_arc = true
+  s.swift_version = '5.0'
 end
 

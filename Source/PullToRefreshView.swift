@@ -112,6 +112,14 @@ open class PullToRefreshView: UIView {
         contentOffestObservation = nil
         contentSizeObservation = nil
     }
+
+    open override func removeFromSuperview() {
+        super.removeFromSuperview()
+        contentOffestObservation?.invalidate()
+        contentSizeObservation?.invalidate()
+        contentOffestObservation = nil
+        contentSizeObservation = nil
+    }
    
     open override func layoutSubviews() {
         super.layoutSubviews()

@@ -105,6 +105,13 @@ open class PullToRefreshView: UIView {
         self.addSubview(arrow)
         self.autoresizingMask = .flexibleWidth
     }
+
+    deinit {
+        contentOffestObservation?.invalidate()
+        contentSizeObservation?.invalidate()
+        contentOffestObservation = nil
+        contentSizeObservation = nil
+    }
    
     open override func layoutSubviews() {
         super.layoutSubviews()

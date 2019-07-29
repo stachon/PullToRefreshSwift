@@ -29,7 +29,7 @@ open class PullToRefreshView: UIView {
     fileprivate var refreshCompletion: (() -> Void)?
     fileprivate var pull: Bool = true
     
-    fileprivate var positionY:CGFloat = 0 {
+    fileprivate var positionY: CGFloat = 0 {
         didSet {
             if self.positionY == oldValue {
                 return
@@ -71,20 +71,20 @@ open class PullToRefreshView: UIView {
     
     // MARK: UIView
     public override convenience init(frame: CGRect) {
-        self.init(options: PullToRefreshOption(),frame:frame, refreshCompletion:nil)
+        self.init(options: PullToRefreshOption(),frame:frame, refreshCompletion: nil)
     }
     
     public required init?(coder aDecoder: NSCoder) {
         fatalError("init(coder:) has not been implemented")
     }
     
-    public init(options: PullToRefreshOption, frame: CGRect, refreshCompletion :(() -> Void)?, down:Bool=true) {
+    public init(options: PullToRefreshOption, frame: CGRect, refreshCompletion: (() -> Void)?, down: Bool = true) {
         self.options = options
         self.refreshCompletion = refreshCompletion
 
         self.backgroundView = UIView(frame: CGRect(x: 0, y: 0, width: frame.size.width, height: frame.size.height))
         self.backgroundView.backgroundColor = self.options.backgroundColor
-        self.backgroundView.autoresizingMask = UIView.AutoresizingMask.flexibleWidth
+        self.backgroundView.autoresizingMask = .flexibleWidth
         
         self.arrow = UIImageView(frame: CGRect(x: 0, y: 0, width: 30, height: 30))
         self.arrow.autoresizingMask = [.flexibleLeftMargin, .flexibleRightMargin]
@@ -123,7 +123,7 @@ open class PullToRefreshView: UIView {
    
     open override func layoutSubviews() {
         super.layoutSubviews()
-        self.arrow.center = CGPoint(x: self.frame.size.width / 2, y: self.frame.size.height / 2)
+        self.arrow.center = CGPoint(x: self.frame.size.width / 2, y: self.frame.size.height - PullToRefreshConst.height / 2)
         self.arrow.frame = arrow.frame.offsetBy(dx: 0, dy: 0)
         self.indicator.center = self.arrow.center
     }
@@ -138,7 +138,7 @@ open class PullToRefreshView: UIView {
 
             // Alpha set
             if PullToRefreshConst.alpha {
-                var alpha = abs(offsetY) / (self.frame.size.height + 40)
+                var alpha = abs(offsetY) / (PullToRefreshConst.height + 40)
                 if alpha > 0.8 {
                     alpha = 0.8
                 }
@@ -150,7 +150,7 @@ open class PullToRefreshView: UIView {
                     return
                 }
 
-                if offsetY < -self.frame.size.height {
+                if offsetY < -PullToRefreshConst.height {
                     // pulling or refreshing
                     if scrollView.isDragging == false && self.state != .refreshing { //release the finger
                         self.state = .refreshing //startAnimating
@@ -171,7 +171,7 @@ open class PullToRefreshView: UIView {
                 if self.pull {
                     return
                 }
-                if upHeight > self.frame.size.height {
+                if upHeight > PullToRefreshConst.height {
                     // pulling or refreshing
                     if scrollView.isDragging == false && self.state != .refreshing { //release the finger
                         self.state = .refreshing //startAnimating
@@ -203,9 +203,9 @@ open class PullToRefreshView: UIView {
         
         var insets = scrollView.contentInset
         if pull {
-            insets.top += self.frame.size.height
+            insets.top += PullToRefreshConst.height
         } else {
-            insets.bottom += self.frame.size.height
+            insets.bottom += PullToRefreshConst.height
         }
         scrollView.bounces = false
         UIView.animate(withDuration: PullToRefreshConst.animationDuration,
